@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* NEWS TYPOGRAPHY */
+.article-content h1,
+.article-content h2 {
+    @apply font-bold text-gray-900 mt-6 mb-3;
+}
+
+.article-content p {
+    @apply text-gray-700 leading-relaxed mb-4;
+}
+
+.article-content img {
+    @apply rounded-lg my-4 w-full;
+}
+
+/* BREAKING NEWS ANIMATION */
+@keyframes pulse-red {
+    0%, 100% { background-color: #dc2626; }
+    50% { background-color: #991b1b; }
+}
+
+.breaking {
+    animation: pulse-red 1.5s infinite;
+}
+
+/* NEWS CARD */
+.news-card {
+    @apply bg-white shadow-sm rounded-lg overflow-hidden hover:shadow-md transition;
+}
+
+/* CATEGORY BADGE */
+.category-badge {
+    @apply text-xs font-bold px-3 py-1 rounded text-white bg-red-600;
+}

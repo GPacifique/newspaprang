@@ -1,0 +1,1 @@
+<img src="{{ asset('images/logo-umwambi.jpeg') }}" alt="Logo" class="h-20 w-auto">
