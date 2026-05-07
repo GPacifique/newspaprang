@@ -1,0 +1,22 @@
+{
+    "Email": "Barua pepe",
+    "Password": "Nenosiri",
+    "Remember me": "Nikumbuke",
+    "Forgot your password?": "Umesahau nenosiri lako?",
+    "Log in": "Ingia",
+    "Register": "Jisajili",
+    "Name": "Jina",
+    "Confirm Password": "Thibitisha nenosiri",
+    "Already registered?": "Tayari umesajiliwa?",
+    "Reset Password": "Badilisha nenosiri",
+    "Send Password Reset Link": "Tuma kiungo cha kubadilisha nenosiri",
+    "Whoops! Something went wrong.": "Lo! Kitu kimeenda vibaya.",
+    "This is a secure area of the application. Please confirm your password before continuing.": "Hii ni eneo salama la programu. Tafadhali thibitisha nenosiri lako kabla ya kuendelea.",
+    "Confirm": "Thibitisha",
+    "Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.": "Umesahau nenosiri lako? Hakuna shida. Tuambie tu anwani yako ya barua pepe na tutakutumia kiungo cha kubadilisha nenosiri.",
+    "Email Password Reset Link": "Tuma kiungo cha kubadilisha nenosiri",
+    "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.": "Asante kwa kusajiliwa! Kabla ya kuanza, unaweza kuthibitisha anwani yako ya barua pepe kwa kubofya kiungo tulichokutumia? Ikiwa hukupokea barua pepe, tutakutumia nyingine kwa furaha.",
+    "A new verification link has been sent to the email address you provided during registration.": "Kiungo kipya cha uthibitisho kimetumwa kwenye anwani ya barua pepe uliyotoa wakati wa usajili.",
+    "Resend Verification Email": "Tuma tena barua pepe ya uthibitisho",
+    "Log Out": "Ondoka"
+}

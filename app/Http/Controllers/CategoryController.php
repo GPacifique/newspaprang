@@ -56,6 +56,7 @@ public function show($slug)
     $category = Category::where('slug', $slug)->firstOrFail();
 
     $articles = $category->articles()
+        ->with(['author', 'category'])
         ->where('status', 'published')
         ->latest()
         ->paginate(10);

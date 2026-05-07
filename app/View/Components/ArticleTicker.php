@@ -17,6 +17,7 @@ class ArticleTicker extends Component
     public function __construct()
     {
         $this->articles = Article::where('status', 'published')
+            ->whereNotNull('slug')
             ->latest()
             ->take(10)
             ->get();

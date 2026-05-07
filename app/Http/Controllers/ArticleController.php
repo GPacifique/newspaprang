@@ -107,5 +107,18 @@ class ArticleController extends Controller
         $article->delete();
         return back();
     }
+
+public function search(Request $request)
+{
+    $query = $request->q;
+
+    $articles = Article::where('title', 'like', "%{$query}%")
+        ->orWhere('content', 'like', "%{$query}%")
+        ->published()
+        ->latest()
+        ->get();
+
+    return view('articles.search', compact('articles', 'query'));
+}
    
 }

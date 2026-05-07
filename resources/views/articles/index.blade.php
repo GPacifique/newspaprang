@@ -1,5 +1,4 @@
 <x-app-layout>
-@section('content')
 
 <div class="container mx-auto px-6 py-6">
 
@@ -139,5 +138,4 @@
 
 </div>
 
-@endsection
 </x-app-layout>

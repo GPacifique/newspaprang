@@ -1,6 +1,4 @@
 <x-app-layout>
-
-@section('content')
 <div class="min-h-screen bg-gray-100 p-6">
 
     <!-- Header -->
@@ -9,6 +7,13 @@
             <h1 class="text-2xl font-bold text-gray-800">Journalist Dashboard</h1>
             <p class="text-gray-500">Manage articles, profile, and newsroom activities</p>
         </div>
+        @php
+            $articlesCount = $articles->count();
+            $publishedCount = $articles->where('status', 'published')->count();
+            $draftCount = $articles->where('status', 'draft')->count();
+            $viewsCount = $articles->sum('views');
+            $articles = $articles->sortByDesc('updated_at')->take(5);
+        @endphp
 
         <a href="{{ route('articles.create') }}"
            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
@@ -143,5 +148,4 @@
     </div>
 
 </div>
-@endsection
 </x-app-layout>

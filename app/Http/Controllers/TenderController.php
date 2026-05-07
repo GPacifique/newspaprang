@@ -5,61 +5,75 @@ namespace App\Http\Controllers;
 use App\Models\Tender;
 use Illuminate\Http\Request;
 
-class TenderController extends Controller
+   class TenderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $tenders = Tender::latest()->paginate(10);
+        return view('tenders.index', compact('tenders'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('tenders.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+   public function store(Request $request)
+{
+    $request->validate([
+        'title' => 'required',
+        'description' => 'required',
+        'organization_name' => 'required',
+        'deadline' => 'required|date',
+        'logo_path' => 'nullable|image',
+        'document' => 'nullable|mimes:pdf,doc,docx',
+    ]);
+
+    $logoPath = null;
+    $documentPath = null;
+
+    // Save logo
+    if ($request->hasFile('logo_path')) {
+        $logoPath = $request->file('logo_path')
+                            ->store('tenders/logos', 'public');
     }
 
-    /**
-     * Display the specified resource.
-     */
+    // Save document
+    if ($request->hasFile('document')) {
+        $documentPath = $request->file('document')
+                                ->store('tenders/documents', 'public');
+    }
+
+    Tender::create([
+        'title' => $request->title,
+        'description' => $request->description,
+        'organization_name' => $request->organization_name,
+        'deadline' => $request->deadline,
+        'status' => $request->status,
+        'logo_path' => $logoPath,
+        'document' => $documentPath,
+    ]);
+
+    return redirect()->route('tenders.index')
+        ->with('success', 'Tender created successfully');
+}
     public function show(Tender $tender)
     {
-        //
+        return view('tenders.show', compact('tender'));
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Tender $tender)
+    public function search(Request $request)
     {
-        //
-    }
+        $query = $request->input('q');
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Tender $tender)
-    {
-        //
-    }
+        $tenders = Tender::where('title', 'like', "%{$query}%")
+            ->orWhere('organization_name', 'like', "%{$query}%")
+            ->latest()
+            ->get();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Tender $tender)
-    {
-        //
+        return view('tenders.index', compact('tenders'));
     }
+    public function getRouteKeyName()
+{
+    return 'slug';
+}
 }

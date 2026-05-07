@@ -1,6 +1,4 @@
 <x-app-layout>
-
-@section('content')
 <div class="bg-gray-100 min-h-screen py-8">
     <div class="max-w-7xl mx-auto px-4 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
 
@@ -101,10 +99,16 @@
                             >
                         @endif
 
-                        <a href="{{ route('articles.show', $related->slug) }}"
-                           class="font-semibold text-gray-800 hover:text-red-600">
-                            {{ $related->title }}
-                        </a>
+                        @if($related->slug)
+                            <a href="{{ route('articles.show', $related->slug) }}"
+                               class="font-semibold text-gray-800 hover:text-red-600">
+                                {{ $related->title }}
+                            </a>
+                        @else
+                            <span class="font-semibold text-gray-800">
+                                {{ $related->title }}
+                            </span>
+                        @endif
 
                         <p class="text-sm text-gray-500 mt-2">
                             {{ $related->created_at->format('d M Y') }}
@@ -122,18 +126,25 @@
                     Trending News
                 </h2>
 
-                @foreach($trendingArticles ?? [] as $trend)
+                @forelse($trendingArticles ?? [] as $trend)
                     <div class="mb-3 pb-3 border-b last:border-none">
-                        <a href="{{ route('articles.show', $trend->slug) }}"
-                           class="font-medium hover:text-red-600">
-                            {{ $trend->title }}
-                        </a>
+                        @if($trend->slug)
+                            <a href="{{ route('articles.show', $trend->slug) }}"
+                               class="font-medium hover:text-red-600">
+                                {{ $trend->title }}
+                            </a>
+                        @else
+                            <span class="font-medium text-gray-600">
+                                {{ $trend->title }}
+                            </span>
+                        @endif
                     </div>
-                @endforeach
+                @empty
+                    <p class="text-gray-500 text-sm">No trending articles</p>
+                @endforelse
             </div>
 
         </div>
     </div>
 </div>
-@endsection
 </x-app-layout>

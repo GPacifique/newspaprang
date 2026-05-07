@@ -33,4 +33,21 @@ class Advertisement extends Model
         return $this->is_active &&
                now()->between($this->start_date, $this->end_date);
     }
+
+    /**
+     * Get the full URL for the advertisement image
+     */
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        // If the path doesn't start with 'advertisements/', prepend it
+        if (!str_starts_with($this->image, 'advertisements/')) {
+            return asset('storage/advertisements/' . $this->image);
+        }
+
+        return asset('storage/' . $this->image);
+    }
 }

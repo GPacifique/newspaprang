@@ -52,6 +52,11 @@ class Article extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    /**
+     * Get the article's image URL
+     */
+    
+
     public function getRouteKeyName()
     {
         return 'slug';
@@ -88,5 +93,21 @@ class Article extends Model
     {
         return $query->where('title', 'like', "%{$term}%")
                      ->orWhere('content', 'like', "%{$term}%");
+    }
+
+    /**
+     * Get the full URL for the featured image
+     */
+public function getImageUrlAttribute()
+    {
+        if (!$this->featured_image) {
+            return null;
+        }
+        // If the path doesn't start with 'articles/', prepend it
+        if (!str_starts_with($this->featured_image, 'articles/')) {
+            return asset('storage/articles/' . $this->featured_image);
+        }
+
+        return asset('storage/' . $this->featured_image);
     }
 }

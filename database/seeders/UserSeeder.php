@@ -10,34 +10,36 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Admin
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
-            [
-                'name' => 'Admin User',
-                'password' => Hash::make('password'),
-            ]
-        );
-        $admin->assignRole('admin');
+        // ADMIN
+        User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@news.com',
+            'password' => Hash::make('password'),
+            'role' => 'admin',
+        ]);
 
-        // Editor
-        $editor = User::firstOrCreate(
-            ['email' => 'editor@example.com'],
-            [
-                'name' => 'Editor User',
-                'password' => Hash::make('password'),
-            ]
-        );
-        $editor->assignRole('editor');
+        // EDITOR
+        User::create([
+            'name' => 'Editor User',
+            'email' => 'editor@news.com',
+            'password' => Hash::make('password'),
+            'role' => 'editor',
+        ]);
 
-        // Journalist
-        $journalist = User::firstOrCreate(
-            ['email' => 'journalist@example.com'],
-            [
-                'name' => 'Journalist User',
-                'password' => Hash::make('password'),
-            ]
-        );
-        $journalist->assignRole('journalist');
+        // JOURNALIST
+        User::create([
+            'name' => 'Journalist User',
+            'email' => 'journalist@news.com',
+            'password' => Hash::make('password'),
+            'role' => 'journalist',
+        ]);
+
+        // NORMAL USER (reader)
+        User::create([
+            'name' => 'Normal User',
+            'email' => 'user@news.com',
+            'password' => Hash::make('password'),
+            'role' => 'user',
+        ]);
     }
 }

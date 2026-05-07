@@ -1,0 +1,22 @@
+{
+    "Email": "Imeri",
+    "Password": "Ijambo ry'ibanga",
+    "Remember me": "Unyibuke",
+    "Forgot your password?": "Wibagiwe ijambo ry'ibanga?",
+    "Log in": "Injira",
+    "Register": "Iyandikishe",
+    "Name": "Izina",
+    "Confirm Password": "Emeza ijambo ry'ibanga",
+    "Already registered?": "Wamaze kwiyandikisha?",
+    "Reset Password": "Hindura ijambo ry'ibanga",
+    "Send Password Reset Link": "Ohereza urusobe rwo guhindura ijambo ry'ibanga",
+    "Whoops! Something went wrong.": "Ewe! Hari ikintu kitagenze neza.",
+    "This is a secure area of the application. Please confirm your password before continuing.": "Aha ni ahantu hizewe h'porogaramu. Nyamuneka emeza ijambo ry'ibanga ryanyu mbere yo gukomeza.",
+    "Confirm": "Emeza",
+    "Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.": "Wibagiwe ijambo ry'ibanga? Nta kibazo. Duhe aderesi yawe ya imeri kandi tuzakuoherezaho urusobe rwo guhindura ijambo ry'ibanga.",
+    "Email Password Reset Link": "Ohereza urusobe rwo guhindura ijambo ry'ibanga",
+    "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.": "Urakoze kwiyandikisha! Mbere yo gutangira, wakwemeza aderesi yawe ya imeri ukanda kuri urusobe twaguhaye? Niba utahawe imeri, tuzakuoherezaho indi.",
+    "A new verification link has been sent to the email address you provided during registration.": "Urusobe rushya rwo kwemeza rwoherejwe kuri aderesi ya imeri watanze mugihe cyo kwiyandikisha.",
+    "Resend Verification Email": "Ohereza nanone imeri yo kwemeza",
+    "Log Out": "Sohoka"
+}

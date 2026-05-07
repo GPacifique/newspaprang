@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('tenders', function (Blueprint $table) {
     $table->id();
+    $table->string('logo_path')->nullable();
     $table->string('title');
+     $table->string('slug')->unique();
     $table->text('description');
     $table->string('organization_name');
     $table->date('deadline');

@@ -10,12 +10,16 @@
 
             <div id="ticker" class="flex gap-10 whitespace-nowrap animate-scroll">
 
-                @foreach($articles as $article)
-                    <a href="{{ route('articles.show', $article->slug) }}"
-                       class="hover:underline text-sm">
-                        {{ $article->title }}
-                    </a>
-                @endforeach
+                @forelse($articles as $article)
+                    @if($article->slug)
+                        <a href="{{ route('articles.show', $article->slug) }}"
+                           class="hover:underline text-sm">
+                            {{ $article->title }}
+                        </a>
+                    @endif
+                @empty
+                    <span class="text-sm">No breaking news</span>
+                @endforelse
 
             </div>
 

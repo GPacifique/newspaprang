@@ -62,7 +62,7 @@ class HomeController extends Controller
         // =========================
         // TENDERS
         // =========================
-        $tenders = Tender::where('status', 'published')
+        $tenders = Tender::where('status', 'Active')
             ->latest()
             ->take(5)
             ->get();
