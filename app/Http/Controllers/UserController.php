@@ -147,9 +147,4 @@ class UserController extends Controller
             ->route('users.index')
             ->with('success', 'User deleted successfully');
     }
-
-public function articles()
-{
-    return $this->hasMany(Article::class);
-}
 }

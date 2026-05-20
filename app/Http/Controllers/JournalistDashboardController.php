@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Article;
 Use Illuminate\Http\Request;
 Use Illuminate\Auth\Access\AuthorizationException;
-Use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Auth;
 
 
 class JournalistDashboardController extends Controller
@@ -16,7 +16,7 @@ class JournalistDashboardController extends Controller
 $publishedCount = Article::where('author_id', $user->id)->where('status', 'published')->count();
 $draftCount = Article::where('author_id', $user->id)->where('status', 'draft')->count();
  $viewsCount = Article::where('author_id', $user->id)->sum('views');
-        $articles = $user->articles()->latest()->get();
+        $articles = Article::where('author_id', $user->id)->with('category')->latest()->get();
 
         return view('journalist.dashboard', [
             'publishedCount' => $publishedCount,
@@ -33,11 +33,13 @@ $draftCount = Article::where('author_id', $user->id)->where('status', 'draft')->
 
             'articlesCount' => (clone $articles)->count(),
 
-            'recentArticles' => (clone $articles)
-                ->with('category')
-                ->latest()
-                ->limit(5)
-                ->get(),
+            'recentArticles' => (clone $articles)->sortByDesc('updated_at')->take(5),
         ]);
     }
+    public function dashboard()
+{
+    $articles = Article::where('author_id', Auth::id())->get();
+
+    return view('journalist.dashboard', compact('articles'));
+}
 }
