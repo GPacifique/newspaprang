@@ -7,64 +7,29 @@ use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        return Comment::create([
-            'article_id'=>$request->article_id,
-            'user_id'=>auth()->id(),
-            'parent_id'=>$request->parent_id,
-            'content'=>$request->content
+        $request->validate([
+            'article_id' => 'required|exists:articles,id',
+            'name' => 'required|max:255',
+            'email' => 'nullable|email',
+            'content' => 'required|min:3|max:2000',
         ]);
-    }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Comment $comment)
-    {
-        //
-    }
+        Comment::create([
+            'article_id' => $request->article_id,
+            'parent_id' => $request->parent_id,
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Comment $comment)
-    {
-        //
-    }
+            'name' => $request->name,
+            'email' => $request->email,
+            'content' => $request->content,
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Comment $comment)
-    {
-        //
-    }
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Comment $comment)
-    {
-        //
+            'approved' => true,
+        ]);
+
+        return back()->with('success', 'Comment posted successfully.');
     }
 }

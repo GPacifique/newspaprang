@@ -12,16 +12,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-
-        $middleware->alias([
-        'custom.role' => EnsureUserHasRole::class,
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        
+        // Placed safely within the web stack group where Session and Cookies are fully initialized
+        $middleware->web(append: [
+            \App\Http\Middleware\SetLocale::class, // Run this first in the web group to initialize language strings before Inertia shares data
+            \App\Http\Middleware\HandleInertiaRequests::class,
+            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // Set language FIRST (important for news sites)
-        $middleware->prepend(\App\Http\Middleware\SetLocale::class);
+      $middleware->alias([
+    'custom.role' => \App\Http\Middleware\EnsureUserHasRole::class,
+    'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+    'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+    'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

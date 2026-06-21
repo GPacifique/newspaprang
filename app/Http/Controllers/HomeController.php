@@ -3,103 +3,78 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
-use App\Models\Tender;
-use App\Models\Announcement;
-use App\Models\Advertisement;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class HomeController extends Controller
 {
-    public function index()
+    /**
+     * Homepage / Newsroom Landing Page
+     */
+    public function index(Request $request)
     {
-        // =========================
-        // FEATURED + HEADLINES
-        // =========================
+        // FIX: match frontend input name "q"
+        $query = $request->input('q');
+
+        /*
+        |-----------------------------------------
+        | FEATURED ARTICLE
+        |-----------------------------------------
+        */
         $featured = Article::with(['category', 'author'])
             ->where('status', 'published')
             ->latest()
             ->first();
 
-        $breakingNews = Article::where('status', 'published')
+        /*
+        |-----------------------------------------
+        | BREAKING NEWS
+        |-----------------------------------------
+        */
+        $breakingNews = Article::with(['category', 'author'])
+            ->where('status', 'published')
             ->where('is_breaking', true)
             ->latest()
-            ->take(10)
+            ->take(8)
             ->get();
 
-        $latestArticles = Article::with(['category', 'author'])
-            ->where('status', 'published')
-            ->latest()
-            ->take(10)
-            ->get();
-
+        /*
+        |-----------------------------------------
+        | TRENDING ARTICLES
+        |-----------------------------------------
+        */
         $trending = Article::with(['category', 'author'])
             ->where('status', 'published')
-            ->orderBy('views', 'desc')
-            ->take(10)
+            ->orderByDesc('views')
+            ->take(6)
             ->get();
 
-        // =========================
-        // CATEGORY HELPER
-        // =========================
-        $getCategory = function ($slug) {
-            return Article::with(['category', 'author'])
-                ->where('status', 'published')
-                ->whereHas('category', function ($q) use ($slug) {
-                    $q->where('slug', $slug);
-                })
-                ->latest()
-                ->take(8)
-                ->get();
-        };
-
-        $entertainment = $getCategory('entertainment');
-        $health = $getCategory('health');
-        $education = $getCategory('education');
-        $politics = $getCategory('politics');
-        $sports = $getCategory('sports');
-        $business = $getCategory('business');
-        $technology = $getCategory('technology');
-
-        // =========================
-        // TENDERS
-        // =========================
-        $tenders = Tender::where('status', 'Active')
+        /*
+        |-----------------------------------------
+        | LATEST ARTICLES (WITH OPTIONAL SEARCH)
+        |-----------------------------------------
+        */
+        $latestArticles = Article::with(['category', 'author'])
+            ->where('status', 'published')
+            ->when($query, function ($builder) use ($query) {
+                $builder->where('title', 'like', "%{$query}%")
+                        ->orWhere('content', 'like', "%{$query}%");
+            })
             ->latest()
-            ->take(5)
+            ->take(12)
             ->get();
 
-        // =========================
-        // ANNOUNCEMENTS
-        // =========================
-        $announcements = Announcement::where('status', 'published')
-            ->latest()
-            ->take(5)
-            ->get();
-
-        // =========================
-        // ADS
-        // =========================
-        $advertisements = Advertisement::where('is_active', true)
-            ->latest()
-            ->take(5)
-            ->get();
-
-        return view('home', [
+        /*
+        |-----------------------------------------
+        | RETURN INERTIA PAGE
+        |-----------------------------------------
+        */
+        return Inertia::render('Home', [
             'featured' => $featured,
             'breakingNews' => $breakingNews,
-            'latestArticles' => $latestArticles,
             'trending' => $trending,
-
-            'entertainment' => $entertainment,
-            'health' => $health,
-            'education' => $education,
-            'politics' => $politics,
-            'sports' => $sports,
-            'business' => $business,
-            'technology' => $technology,
-
-            'tenders' => $tenders,
-            'announcements' => $announcements,
-            'advertisements' => $advertisements,
+            'latestArticles' => $latestArticles,
+            'query' => $query ?? '',
         ]);
     }
 }

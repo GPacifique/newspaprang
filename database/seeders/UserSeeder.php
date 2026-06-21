@@ -10,36 +10,36 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // ADMIN
         User::create([
             'name' => 'Admin User',
             'email' => 'admin@news.com',
             'password' => Hash::make('password'),
             'role' => 'admin',
+            'status' => 'active',
         ]);
 
-        // EDITOR
         User::create([
             'name' => 'Editor User',
             'email' => 'editor@news.com',
             'password' => Hash::make('password'),
             'role' => 'editor',
+            'status' => 'active',
         ]);
 
-        // JOURNALIST
         User::create([
             'name' => 'Journalist User',
             'email' => 'journalist@news.com',
             'password' => Hash::make('password'),
             'role' => 'journalist',
+            'status' => 'active',
         ]);
 
-        // NORMAL USER (reader)
         User::create([
-            'name' => 'Normal User',
-            'email' => 'user@news.com',
+            'name' => 'Normal Reader',
+            'email' => 'reader@news.com',
             'password' => Hash::make('password'),
-            'role' => 'user',
+            'role' => 'reader',
+            'status' => 'active',
         ]);
     }
 }

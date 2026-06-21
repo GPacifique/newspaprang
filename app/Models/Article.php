@@ -2,112 +2,64 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Model;
 
 class Article extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
+    /**
+     * Fields that can be mass assigned
+     */
     protected $fillable = [
         'title',
         'slug',
         'excerpt',
         'content',
-        'author_id',
-        'category_id',
-        'approved_by',
-        'status',
         'featured_image',
-        'video_url',
-        'is_featured',
+        'status',
+        'seo_title',
+        'seo_description',
         'is_breaking',
+        'is_featured',
         'views',
+        'category_id',
+        'user_id',
         'published_at',
-        'scheduled_at',
-        'meta_title',
-        'meta_description',
     ];
 
+    /**
+     * Cast types
+     */
     protected $casts = [
-        'is_featured' => 'boolean',
         'is_breaking' => 'boolean',
+        'is_featured' => 'boolean',
         'published_at' => 'datetime',
-        'scheduled_at' => 'datetime',
+        'views' => 'integer',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    // Author of the article (journalist/user)
     public function author()
     {
-        return $this->belongsTo(User::class, 'author_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
+    // Category of article
     public function category()
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function approver()
+    // Comments under article
+    public function comments()
     {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
-
-    /**
-     * Get the article's image URL
-     */
-    
-
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
-    public function scopePublished($query)
-    {
-        return $query->where('status', 'published');
-    }   
-    public function scopeFeatured($query)
-    {
-        return $query->where('is_featured', true);
-    }
-    public function scopeBreaking($query)
-    {
-        return $query->where('is_breaking', true);
-    }   
-    public function scopeTrending($query)
-    {
-        return $query->orderBy('views', 'desc');
-    }
-    public function scopeRecent($query)
-    {
-        return $query->latest();
-    }
-    public function scopeByCategory($query, $categoryId)
-    {
-        return $query->where('category_id', $categoryId);
-    }
-    public function scopeByAuthor($query, $authorId)
-    {
-        return $query->where('author_id', $authorId);
-    }
-    public function scopeSearch($query, $term)
-    {
-        return $query->where('title', 'like', "%{$term}%")
-                     ->orWhere('content', 'like', "%{$term}%");
-    }
-
-    /**
-     * Get the full URL for the featured image
-     */
-public function getImageUrlAttribute()
-    {
-        if (!$this->featured_image) {
-            return null;
-        }
-        // If the path doesn't start with 'articles/', prepend it
-        if (!str_starts_with($this->featured_image, 'articles/')) {
-            return asset('storage/articles/' . $this->featured_image);
-        }
-
-        return asset('storage/' . $this->featured_image);
+        return $this->hasMany(Comment::class)->latest();
     }
 }

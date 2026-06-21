@@ -3,107 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Article;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
     /**
-     * List categories
+     * Show category page (React/Inertia)
      */
-    public function index()
+    public function show($slug)
     {
-        $categories = Category::withCount('articles')
+        $category = Category::where('slug', $slug)->firstOrFail();
+
+        $articles = Article::with(['author', 'category'])
+            ->where('category_id', $category->id)
+            ->where('status', 'published')
             ->latest()
             ->paginate(10);
 
-        return view('categories.index', compact('categories'));
-    }
-
-    /**
-     * Create form
-     */
-    public function create()
-    {
-        return view('categories.create');
-    }
-
-    /**
-     * Store category
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|max:255|unique:categories,name',
+        return Inertia::render('Categories/Show', [
+            'category' => $category,
+            'articles' => $articles,
         ]);
-
-        Category::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-        ]);
-
-        return redirect()
-            ->route('categories.index')
-            ->with('success', 'Category created successfully');
     }
 
     /**
-     * Show category with articles
+     * Optional: list all categories
      */
-   
-public function show($slug)
-{
-    $category = Category::where('slug', $slug)->firstOrFail();
-
-    $articles = $category->articles()
-        ->with(['author', 'category'])
-        ->where('status', 'published')
-        ->latest()
-        ->paginate(10);
-
-    return view('categories.show', compact('category', 'articles'));
-}
-    /**
-     * Edit form
-     */
-    public function edit(Category $category)
+    public function index()
     {
-        return view('categories.edit', compact('category'));
-    }
+        $categories = Category::withCount('articles')->get();
 
-    /**
-     * Update category
-     */
-    public function update(Request $request, Category $category)
-    {
-        $request->validate([
-            'name' => 'required|max:255|unique:categories,name,' . $category->id,
+        return Inertia::render('Categories/Index', [
+            'categories' => $categories,
         ]);
-
-        $category->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-        ]);
-
-        return redirect()
-            ->route('categories.index')
-            ->with('success', 'Category updated successfully');
-    }
-
-    /**
-     * Delete category
-     */
-    public function destroy(Category $category)
-    {
-        // Prevent deleting if articles exist
-        if ($category->articles()->count() > 0) {
-            return back()->with('error', 'Cannot delete category with articles');
-        }
-
-        $category->delete();
-
-        return redirect()
-            ->route('categories.index')
-            ->with('success', 'Category deleted successfully');
     }
 }

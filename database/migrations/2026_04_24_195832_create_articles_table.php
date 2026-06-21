@@ -6,69 +6,67 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('articles', function (Blueprint $table) {
+
             $table->id();
 
-            // Basic article info
+            // Article Information
             $table->string('title');
             $table->string('slug')->unique();
+
             $table->text('excerpt')->nullable();
             $table->longText('content');
 
-            // Relationships
-            $table->foreignId('author_id')
-                ->constrained('users')
-                ->cascadeOnDelete();
+            // Featured Image
+            $table->string('featured_image')->nullable();
 
-            // Category/Section
-            $table->foreignId('category_id')
-                ->constrained()
-                ->cascadeOnDelete();
-
-            // Optional editor approval
-            $table->foreignId('approved_by')
-                ->nullable()
-                ->constrained('users')
-                ->nullOnDelete();
-
-            // Workflow statuses
+            // Status
             $table->enum('status', [
                 'draft',
-                'submitted',
-                'under_review',
-                'needs_revision',
-                'approved',
-                'scheduled',
                 'published',
                 'archived'
             ])->default('draft');
 
-            // Media
-            $table->string('featured_image')->nullable();
-            $table->string('video_url')->nullable();
+            // SEO
+            $table->string('seo_title')->nullable();
+            $table->text('seo_description')->nullable();
 
-            // Homepage features
-            $table->boolean('is_featured')->default(false);
+            // News Features
             $table->boolean('is_breaking')->default(false);
+            $table->boolean('is_featured')->default(false);
 
-            // Tracking
-            $table->integer('views')->default(0);
+            // Analytics
+            $table->unsignedBigInteger('views')->default(0);
+
+            // Relations
+            $table->foreignId('category_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
             // Publishing
             $table->timestamp('published_at')->nullable();
-            $table->timestamp('scheduled_at')->nullable();
 
-            // SEO
-            $table->string('meta_title')->nullable();
-            $table->text('meta_description')->nullable();
-
-            $table->softDeletes();
             $table->timestamps();
+
+            // Indexes
+            $table->index('status');
+            $table->index('slug');
+            $table->index('published_at');
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('articles');
