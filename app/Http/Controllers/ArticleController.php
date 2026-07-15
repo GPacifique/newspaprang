@@ -5,218 +5,295 @@ namespace App\Http\Controllers;
 use App\Models\Article;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class ArticleController extends Controller
 {
     /**
-     * Display all published articles
+     * Roles allowed to write/manage articles — kept in sync with the
+     * CAN_MANAGE_ARTICLES list in resources/js/Layouts/AuthenticatedLayout.jsx.
      */
- // 1. Update the main public index method
-public function index()
-{
-    return Inertia::render('guest/Articles/index', [
-        'articles' => Article::all()
-    ]);
-}
-
-// 2. Update the filtered byCategory method at the bottom of your controller
-public function byCategory(Category $category)
-{
-    $articles = Article::with(['category', 'author'])
-        ->where('category_id', $category->id)
-        ->where('status', 'published')
-        ->latest()
-        ->paginate(12);
-
-    return Inertia::render('guest/Articles/index', [
-        'articles' => $articles,
-        'category' => $category,
-    ]);
-}
+    private const MANAGER_ROLES = ['super_admin', 'admin', 'editor', 'author'];
 
     /**
-     * Show single article
+     * GET /articles — public listing.
+     * Feeds Pages/Articles/Index.jsx via { articles: { data, links, meta } }.
      */
-    public function show(Article $article)
+    public function index(Request $request): Response
     {
-        // increment views
-        $article->increment('views');
+        $userId = optional($request->user())->id;
 
-        // load relationships
-        $article->load(['category', 'author']);
+        $articles = Article::query()
+            ->with(['category:id,name,slug', 'author:id,name'])
+            ->when($userId, fn ($q) => $q->with(['bookmarks' => fn ($q2) => $q2->where('user_id', $userId)]))
+            ->where('status', 'published')
+            ->latest('published_at')
+            ->paginate(9)
+            ->withQueryString()
+            ->through(fn (Article $article) => $this->toCard($article, $userId));
+
+        return Inertia::render('Articles/Index', [
+            'articles' => $articles,
+        ]);
+    }
+
+    /**
+     * GET /articles/{article:slug} — public single article.
+     * Feeds Pages/Articles/Show.jsx via { article }.
+     */
+    public function show(Article $article): Response
+    {
+        $user = request()->user();
+        $isManager = $user && in_array($user->role, self::MANAGER_ROLES, true);
+        $isOwner = $user && $user->id === $article->user_id;
+
+        abort_unless($article->status === 'published' || $isManager || $isOwner, 404);
+
+        $article->load([
+            'category:id,name,slug',
+            'author:id,name',
+            'comments' => fn ($q) => $q->where('approved', true)->latest(),
+        ]);
+
+        if ($user) {
+            $article->load(['bookmarks' => fn ($q) => $q->where('user_id', $user->id)]);
+        }
 
         return Inertia::render('Articles/Show', [
-            'article' => $article,
+            'article' => [
+                ...$this->toCard($article, optional($user)->id),
+                'content' => $article->content,
+                'comments' => $article->comments->map(fn ($comment) => [
+                    'id' => $comment->id,
+                    'content' => $comment->content,
+                    'name' => $comment->name,
+                    'created_at' => $comment->created_at->diffForHumans(),
+                ]),
+            ],
         ]);
     }
 
     /**
-     * Show create article page
+     * GET /manage/articles/create.
+     * Feeds Pages/Articles/Create.jsx via { categories }.
      */
-    public function create()
+    public function create(Request $request): Response
     {
+        $this->authorizeManager($request);
+
         return Inertia::render('Articles/Create', [
-            'categories' => Category::all(),
+            'categories' => Category::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
     /**
-     * Store article
+     * POST /manage/articles.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'excerpt' => 'nullable|string',
-            'content' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'status' => 'required|in:draft,published',
-            'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
+        $this->authorizeManager($request);
 
-        $imageName = null;
+        $data = $this->validateArticle($request);
 
-        /*
-        |--------------------------------------------------------------------------
-        | UPLOAD IMAGE TO PUBLIC/ARTICLES
-        |--------------------------------------------------------------------------
-        */
+        $article = new Article();
+        $article->title = $data['title'];
+        $article->slug = $this->uniqueSlug($data['title']);
+        $article->category_id = $data['category_id'];
+        $article->excerpt = $data['excerpt'] ?? null;
+        $article->content = $data['content'];
+        $article->status = $data['status'];
+        $article->user_id = $request->user()->id;
+        $article->read_time = $this->estimateReadTime($data['content']);
+        $article->published_at = $data['status'] === 'published' ? now() : null;
 
-        if ($request->hasFile('featured_image')) {
-
-            $image = $request->file('featured_image');
-
-            $imageName = time() . '_' .
-                Str::slug($request->title) . '.' .
-                $image->getClientOriginalExtension();
-
-            $image->move(public_path('articles'), $imageName);
+        if ($request->hasFile('cover_image')) {
+            $article->featured_image = $request->file('cover_image')->store('covers', 'public');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | CREATE ARTICLE
-        |--------------------------------------------------------------------------
-        */
-
-        Article::create([
-            'title' => $request->title,
-            'slug' => Str::slug($request->title),
-            'excerpt' => $request->excerpt,
-            'content' => $request->content,
-            'category_id' => $request->category_id,
-            'featured_image' => $imageName,
-            'status' => $request->status,
-            'is_breaking' => $request->is_breaking ?? false,
-            'views' => 0,
-            'user_id' => Auth::id(),
-        ]);
+        $article->save();
 
         return redirect()
-            ->route('dashboard')
-            ->with('success', 'Article created successfully.');
+            ->route('articles.edit', $article)
+            ->with('success', 'Article saved.');
     }
 
     /**
-     * Show edit page
+     * GET /manage/articles/{article}/edit.
+     * Feeds Pages/Articles/Edit.jsx via { article, categories }.
      */
-    public function edit(Article $article)
+    public function edit(Request $request, Article $article): Response
     {
+        $this->authorizeManager($request, $article);
+
         return Inertia::render('Articles/Edit', [
-            'article' => $article,
-            'categories' => Category::all(),
+            'article' => [
+                'id' => $article->id,
+                'title' => $article->title,
+                'slug' => $article->slug,
+                'category_id' => $article->category_id,
+                'excerpt' => $article->excerpt,
+                'content' => $article->content,
+                'status' => $article->status,
+                'cover_image' => $article->featured_image ? Storage::url($article->featured_image) : null,
+            ],
+            'categories' => Category::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
     /**
-     * Update article
+     * PUT /manage/articles/{article}.
      */
     public function update(Request $request, Article $article)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'excerpt' => 'nullable|string',
-            'content' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'status' => 'required|in:draft,published',
-            'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
+        $this->authorizeManager($request, $article);
 
-        $imageName = $article->featured_image;
+        $data = $this->validateArticle($request);
 
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE IMAGE
-        |--------------------------------------------------------------------------
-        */
-
-        if ($request->hasFile('featured_image')) {
-
-            // delete old image
-            if (
-                $article->featured_image &&
-                file_exists(public_path('articles/' . $article->featured_image))
-            ) {
-                unlink(public_path('articles/' . $article->featured_image));
-            }
-
-            $image = $request->file('featured_image');
-
-            $imageName = time() . '_' .
-                Str::slug($request->title) . '.' .
-                $image->getClientOriginalExtension();
-
-            $image->move(public_path('articles'), $imageName);
+        if ($article->title !== $data['title']) {
+            $article->slug = $this->uniqueSlug($data['title'], $article->id);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE ARTICLE
-        |--------------------------------------------------------------------------
-        */
+        $article->title = $data['title'];
+        $article->category_id = $data['category_id'];
+        $article->excerpt = $data['excerpt'] ?? null;
+        $article->content = $data['content'];
+        $article->read_time = $this->estimateReadTime($data['content']);
 
-        $article->update([
-            'title' => $request->title,
-            'slug' => Str::slug($request->title),
-            'excerpt' => $request->excerpt,
-            'content' => $request->content,
-            'category_id' => $request->category_id,
-            'featured_image' => $imageName,
-            'status' => $request->status,
-            'is_breaking' => $request->is_breaking ?? false,
-        ]);
+        if ($article->status !== 'published' && $data['status'] === 'published') {
+            $article->published_at = now();
+        }
+        $article->status = $data['status'];
+
+        if ($request->hasFile('cover_image')) {
+            if ($article->featured_image) {
+                Storage::disk('public')->delete($article->featured_image);
+            }
+            $article->featured_image = $request->file('cover_image')->store('covers', 'public');
+        }
+
+        $article->save();
 
         return redirect()
-            ->route('dashboard')
-            ->with('success', 'Article updated successfully.');
+            ->route('articles.edit', $article)
+            ->with('success', 'Article updated.');
     }
 
     /**
-     * Delete article
+     * DELETE /manage/articles/{article}.
      */
-    public function destroy(Article $article)
+    public function destroy(Request $request, Article $article)
     {
-        /*
-        |--------------------------------------------------------------------------
-        | DELETE IMAGE
-        |--------------------------------------------------------------------------
-        */
+        $this->authorizeManager($request, $article);
 
-        if (
-            $article->featured_image &&
-            file_exists(public_path('articles/' . $article->featured_image))
-        ) {
-            unlink(public_path('articles/' . $article->featured_image));
+        if ($article->featured_image) {
+            Storage::disk('public')->delete($article->featured_image);
         }
 
         $article->delete();
 
         return redirect()
-            ->back()
-            ->with('success', 'Article deleted successfully.');
+            ->route('articles.index')
+            ->with('success', 'Article deleted.');
     }
-    
+
+    /**
+     * Shared validation rules for store/update.
+     */
+    private function validateArticle(Request $request): array
+    {
+        return $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'category_id' => ['required', Rule::exists('categories', 'id')],
+            'excerpt' => ['nullable', 'string', 'max:500'],
+            'content' => ['required', 'string'],
+            'status' => ['required', Rule::in(['draft', 'pending', 'published'])],
+            // Explicit mimes (no svg): the default 'image' rule allows SVG,
+            // which can carry embedded <script> and enable stored XSS
+            // when served back from public storage.
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
+        ]);
+    }
+
+    /**
+     * Only managers (super-admin/admin/editor/author) may write articles.
+     * Authors may only edit/delete their own articles; other manager roles may touch any.
+     */
+    private function authorizeManager(Request $request, ?Article $article = null): void
+    {
+        $user = $request->user();
+        abort_unless($user && in_array($user->role, self::MANAGER_ROLES, true), 403);
+
+        if ($article && $user->role === 'author') {
+            abort_unless($article->user_id === $user->id, 403);
+        }
+    }
+
+    /**
+     * Generate a unique slug, excluding the given article id on update.
+     */
+    private function uniqueSlug(string $title, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($title);
+        $slug = $base;
+        $i = 1;
+
+        while (
+            Article::query()
+                ->where('slug', $slug)
+                ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+                ->exists()
+        ) {
+            $slug = "{$base}-{$i}";
+            $i++;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * ~200 words per minute, minimum 1 minute.
+     * NOTE: read_time is set via direct property assignment (not mass-assigned),
+     * so it isn't confirmed against the model's $fillable list — verify this
+     * column actually exists in your articles migration.
+     */
+    private function estimateReadTime(string $content): int
+    {
+        $words = str_word_count(strip_tags($content));
+
+        return max(1, (int) round($words / 200));
+    }
+
+    /**
+     * Shape shared by the index card list and the base of the show payload.
+     * $userId is used to compute is_saved from an already-eager-loaded,
+     * user-scoped 'bookmarks' relation — no per-card query.
+     */
+    private function toCard(Article $article, ?int $userId = null): array
+    {
+        return [
+            'id' => $article->id,
+            'slug' => $article->slug,
+            'title' => $article->title,
+            'excerpt' => $article->excerpt,
+            'cover_image' => $article->featured_image ? Storage::url($article->featured_image) : null,
+            'published_at' => $article->published_at?->format('M j, Y'),
+            'read_time' => $article->read_time,
+            'is_saved' => $userId && $article->relationLoaded('bookmarks')
+                ? $article->bookmarks->isNotEmpty()
+                : false,
+            'category' => $article->category ? [
+                'id' => $article->category->id,
+                'name' => $article->category->name,
+                'slug' => $article->category->slug,
+            ] : null,
+            'author' => $article->author ? [
+                'id' => $article->author->id,
+                'name' => $article->author->name,
+            ] : null,
+        ];
+    }
 }

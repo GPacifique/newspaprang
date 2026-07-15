@@ -1,36 +1,50 @@
 import React from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import WireStrip from '@/Components/WireStrip';
 
 /**
- * props: { categories: Category[] }
+ * props: { article: Article, categories: Category[] }
  */
-export default function Create({ categories = [] }) {
+export default function Edit({ article, categories = [] }) {
     const { data, setData, post, processing, errors } = useForm({
-        title: '',
-        category_id: '',
-        excerpt: '',
-        content: '',
+        _method: 'put',
+        title: article.title ?? '',
+        category_id: article.category_id ?? '',
+        excerpt: article.excerpt ?? '',
+        content: article.content ?? '',
         cover_image: null,
-        status: 'draft',
+        status: article.status ?? 'draft',
     });
 
     function submit(e) {
         e.preventDefault();
-        post(route('articles.store'), { forceFormData: true });
+        post(route('articles.update', article.id), { forceFormData: true });
+    }
+
+    function destroy() {
+        if (!confirm(`Delete "${article.title}"? This can't be undone.`)) return;
+        router.delete(route('articles.destroy', article.id));
     }
 
     return (
         <AuthenticatedLayout
             header={
-                <>
-                    <WireStrip code="NEW" timestamp="DRAFT" tone="press" className="mb-2" />
-                    <h1 className="font-display font-bold text-3xl text-[#14171F]">Write an article</h1>
-                </>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <WireStrip code="EDIT" timestamp={data.status.toUpperCase()} tone="gold" className="mb-2" />
+                        <h1 className="font-display font-bold text-3xl text-[#14171F]">{article.title}</h1>
+                    </div>
+                    <button
+                        onClick={destroy}
+                        className="font-mono text-xs uppercase tracking-wider border border-[#D7DBDE] px-4 py-2.5 text-[#C1401F] hover:border-[#C1401F]"
+                    >
+                        Delete article
+                    </button>
+                </div>
             }
         >
-            <Head title="Write article" />
+            <Head title={`Edit — ${article.title}`} />
 
             <form onSubmit={submit} className="max-w-3xl bg-white border border-[#D7DBDE] p-6 space-y-5">
                 <Field label="Title" error={errors.title}>
@@ -38,7 +52,6 @@ export default function Create({ categories = [] }) {
                         type="text"
                         value={data.title}
                         onChange={(e) => setData('title', e.target.value)}
-                        placeholder="Headline for this story"
                         className="w-full border border-[#D7DBDE] font-body text-sm p-3 focus:outline-none focus:border-[#25406B]"
                     />
                 </Field>
@@ -61,12 +74,14 @@ export default function Create({ categories = [] }) {
                         value={data.excerpt}
                         onChange={(e) => setData('excerpt', e.target.value)}
                         rows={2}
-                        placeholder="One or two sentences for the article card"
                         className="w-full border border-[#D7DBDE] font-body text-sm p-3 focus:outline-none focus:border-[#25406B] resize-none"
                     />
                 </Field>
 
-                <Field label="Cover image" error={errors.cover_image}>
+                {article.cover_image && (
+                    <img src={article.cover_image} alt={article.title} className="w-full max-w-sm aspect-[16/9] object-cover border border-[#D7DBDE]" />
+                )}
+                <Field label="Replace cover image" error={errors.cover_image}>
                     <input
                         type="file"
                         accept="image/*"
@@ -80,7 +95,6 @@ export default function Create({ categories = [] }) {
                         value={data.content}
                         onChange={(e) => setData('content', e.target.value)}
                         rows={14}
-                        placeholder="Write the full story…"
                         className="w-full border border-[#D7DBDE] font-body text-sm p-3 focus:outline-none focus:border-[#25406B]"
                     />
                 </Field>
@@ -92,8 +106,8 @@ export default function Create({ categories = [] }) {
                         className="w-full border border-[#D7DBDE] font-body text-sm p-3 focus:outline-none focus:border-[#25406B] bg-white"
                     >
                         <option value="draft">Draft</option>
-                        <option value="pending">Submit for review</option>
-                        <option value="published">Publish</option>
+                        <option value="pending">Pending review</option>
+                        <option value="published">Published</option>
                     </select>
                 </Field>
 
@@ -103,7 +117,7 @@ export default function Create({ categories = [] }) {
                         disabled={processing}
                         className="font-mono text-xs uppercase tracking-wider bg-[#14171F] text-white px-6 py-3 hover:bg-[#25406B] disabled:opacity-50"
                     >
-                        {processing ? 'Saving…' : 'Save article'}
+                        {processing ? 'Saving…' : 'Save changes'}
                     </button>
                 </div>
             </form>

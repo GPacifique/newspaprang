@@ -5,146 +5,172 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
- use App\Models\Article;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+
 class UserController extends Controller
 {
     /**
-     * Display users list
+     * Display a listing of users.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::latest()->paginate(10);
-        return view('users.index', compact('users'));
+        $search = $request->get('search');
+
+        $users = User::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('username', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return Inertia::render('Users/Index', [
+            'users' => $users,
+            'filters' => [
+                'search' => $search,
+            ],
+        ]);
     }
 
     /**
-     * Show create form
+     * Show the form for creating a new user.
      */
     public function create()
     {
-        return view('users.create');
+        return Inertia::render('Users/Create', [
+            'roles' => [
+                'super_admin',
+                'admin',
+                'editor',
+                'author',
+                'moderator',
+                'subscriber',
+                'premium',
+            ],
+        ]);
     }
 
     /**
-     * Store new user
+     * Store a newly created user.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'phone' => 'nullable|string|max:20',
-            'username' => 'nullable|string|unique:users,username',
-            'password' => 'required|min:6',
-            'role' => 'required',
-            'status' => 'required',
-            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name'  => ['required', 'string', 'max:255'],
+            'username'   => ['required', 'string', 'max:255', 'unique:users,username'],
+            'email'      => ['required', 'email', 'max:255', 'unique:users,email'],
+            'phone'      => ['nullable', 'string', 'max:30'],
+            'country'    => ['nullable', 'string', 'max:100'],
+            'bio'        => ['nullable', 'string'],
+            'github'     => ['nullable', 'url'],
+            'linkedin'   => ['nullable', 'url'],
+            'website'    => ['nullable', 'url'],
+            'role'       => ['required'],
+            'status'     => ['required'],
+            'password'   => ['required', 'confirmed', 'min:8'],
         ]);
 
-        $imagePath = null;
+        $validated['password'] = Hash::make($validated['password']);
 
-        if ($request->hasFile('profile_image')) {
-            $imagePath = $request->file('profile_image')
-                ->store('users', 'public');
-        }
-
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'username' => $request->username,
-            'password' => Hash::make($request->password),
-            'profile_image' => $imagePath,
-            'bio' => $request->bio,
-            'role' => $request->role,
-            'status' => $request->status,
-        ]);
+        User::create($validated);
 
         return redirect()
             ->route('users.index')
-            ->with('success', 'User created successfully');
+            ->with('success', 'User created successfully.');
     }
 
     /**
-     * Show single user
+     * Display the specified user.
      */
     public function show(User $user)
     {
-        return view('users.show', compact('user'));
+        return Inertia::render('Users/Show', [
+            'user' => $user,
+        ]);
     }
 
     /**
-     * Show edit form
+     * Show the form for editing the specified user.
      */
     public function edit(User $user)
     {
-        return view('users.edit', compact('user'));
+        return Inertia::render('Users/Edit', [
+            'user' => $user,
+            'roles' => [
+                'super_admin',
+                'admin',
+                'editor',
+                'author',
+                'moderator',
+                'subscriber',
+                'premium',
+            ],
+        ]);
     }
 
     /**
-     * Update user
+     * Update the specified user.
      */
     public function update(Request $request, User $user)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'phone' => 'nullable|string|max:20',
-            'username' => 'nullable|string|unique:users,username,' . $user->id,
-            'role' => 'required',
-            'status' => 'required',
-            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name'  => ['required', 'string', 'max:255'],
+            'username'   => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('users')->ignore($user->id),
+            ],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($user->id),
+            ],
+            'phone'    => ['nullable', 'string', 'max:30'],
+            'country'  => ['nullable', 'string', 'max:100'],
+            'bio'      => ['nullable', 'string'],
+            'github'   => ['nullable', 'url'],
+            'linkedin' => ['nullable', 'url'],
+            'website'  => ['nullable', 'url'],
+            'role'     => ['required'],
+            'status'   => ['required'],
+            'password' => ['nullable', 'confirmed', 'min:8'],
         ]);
 
-        $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'username' => $request->username,
-            'bio' => $request->bio,
-            'role' => $request->role,
-            'status' => $request->status,
-        ];
-
-        // Update password if provided
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
         }
 
-        // Update image
-        if ($request->hasFile('profile_image')) {
-
-            // delete old image
-            if ($user->profile_image) {
-                Storage::disk('public')->delete($user->profile_image);
-            }
-
-            $data['profile_image'] = $request->file('profile_image')
-                ->store('users', 'public');
-        }
-
-        $user->update($data);
+        $user->update($validated);
 
         return redirect()
             ->route('users.index')
-            ->with('success', 'User updated successfully');
+            ->with('success', 'User updated successfully.');
     }
 
     /**
-     * Delete user
+     * Remove the specified user.
      */
     public function destroy(User $user)
     {
-        // delete image first
-        if ($user->profile_image) {
-            Storage::disk('public')->delete($user->profile_image);
+        // Prevent deleting yourself
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'You cannot delete your own account.');
         }
 
         $user->delete();
 
         return redirect()
             ->route('users.index')
-            ->with('success', 'User deleted successfully');
+            ->with('success', 'User deleted successfully.');
     }
 }

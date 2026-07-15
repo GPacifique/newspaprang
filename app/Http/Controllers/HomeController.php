@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,7 +14,6 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-        // FIX: match frontend input name "q"
         $query = $request->input('q');
 
         /*
@@ -28,41 +28,30 @@ class HomeController extends Controller
 
         /*
         |-----------------------------------------
-        | BREAKING NEWS
-        |-----------------------------------------
-        */
-        $breakingNews = Article::with(['category', 'author'])
-            ->where('status', 'published')
-            ->where('is_breaking', true)
-            ->latest()
-            ->take(8)
-            ->get();
-
-        /*
-        |-----------------------------------------
-        | TRENDING ARTICLES
-        |-----------------------------------------
-        */
-        $trending = Article::with(['category', 'author'])
-            ->where('status', 'published')
-            ->orderByDesc('views')
-            ->take(6)
-            ->get();
-
-        /*
-        |-----------------------------------------
         | LATEST ARTICLES (WITH OPTIONAL SEARCH)
         |-----------------------------------------
+        | Wrapped the title/content search in a nested
+        | where() so the OR doesn't escape the
+        | status = 'published' constraint.
         */
-        $latestArticles = Article::with(['category', 'author'])
+        $latest = Article::with(['category', 'author'])
             ->where('status', 'published')
             ->when($query, function ($builder) use ($query) {
-                $builder->where('title', 'like', "%{$query}%")
-                        ->orWhere('content', 'like', "%{$query}%");
+                $builder->where(function ($inner) use ($query) {
+                    $inner->where('title', 'like', "%{$query}%")
+                          ->orWhere('content', 'like', "%{$query}%");
+                });
             })
             ->latest()
             ->take(12)
             ->get();
+
+        /*
+        |-----------------------------------------
+        | CATEGORIES
+        |-----------------------------------------
+        */
+        $categories = Category::orderBy('name')->get();
 
         /*
         |-----------------------------------------
@@ -71,9 +60,8 @@ class HomeController extends Controller
         */
         return Inertia::render('Home', [
             'featured' => $featured,
-            'breakingNews' => $breakingNews,
-            'trending' => $trending,
-            'latestArticles' => $latestArticles,
+            'latest' => $latest,
+            'categories' => $categories,
             'query' => $query ?? '',
         ]);
     }

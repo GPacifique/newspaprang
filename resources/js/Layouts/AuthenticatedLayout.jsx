@@ -1,176 +1,113 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
-import Dropdown from '@/Components/Dropdown';
-import NavLink from '@/Components/NavLink';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import React, { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+
+// Maps a role to its dedicated dashboard route + a tone for the sidebar accent stripe.
+const ROLE_DASHBOARDS = {
+    'super-admin': { route: 'super-admin.dashboard', label: 'Super Admin', tone: '#C1401F' },
+    admin: { route: 'admin.dashboard', label: 'Admin', tone: '#25406B' },
+    editor: { route: 'editor.dashboard', label: 'Editor', tone: '#B8862E' },
+    author: { route: 'author.dashboard', label: 'Author', tone: '#25406B' },
+    moderator: { route: 'moderator.dashboard', label: 'Moderator', tone: '#C1401F' },
+    subscriber: { route: 'subscriber.dashboard', label: 'Subscriber', tone: '#3A4048' },
+    premium: { route: 'premium.dashboard', label: 'Premium', tone: '#B8862E' },
+};
+
+// Roles that can reach the article management area under /manage.
+const CAN_MANAGE_ARTICLES = ['super-admin', 'admin', 'editor', 'author'];
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { auth, url } = usePage().props;
+    const user = auth?.user ?? { name: 'User', role: 'subscriber' };
+    const roleInfo = ROLE_DASHBOARDS[user.role] ?? { route: 'dashboard', label: 'Overview', tone: '#25406B' };
+    const [mobileOpen, setMobileOpen] = useState(false);
 
-    const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
+    const navItem = (href, label, active) => (
+        <Link
+            href={href}
+            className={`block font-mono text-xs uppercase tracking-wider px-4 py-2.5 border-l-2 transition-colors
+                ${active
+                    ? 'border-white text-white bg-white/10'
+                    : 'border-transparent text-white/60 hover:text-white hover:bg-white/5'}`}
+        >
+            {label}
+        </Link>
+    );
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <nav className="border-b border-gray-100 bg-white">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 justify-between">
-                        <div className="flex">
-                            <div className="flex shrink-0 items-center">
-                                <Link href="/">
-                                    <ApplicationLogo className="block h-9 w-auto fill-current text-gray-800" />
-                                </Link>
-                            </div>
-
-                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
-                                >
-                                    Dashboard
-                                </NavLink>
-                            </div>
-                        </div>
-
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center">
-                            <div className="relative ms-3">
-                                <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                            >
-                                                {user.name}
-
-                                                <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </Dropdown.Trigger>
-
-                                    <Dropdown.Content>
-                                        <Dropdown.Link
-                                            href={route('profile.edit')}
-                                        >
-                                            Profile
-                                        </Dropdown.Link>
-                                        <Dropdown.Link
-                                            href={route('logout')}
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </Dropdown.Link>
-                                    </Dropdown.Content>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <div className="-me-2 flex items-center sm:hidden">
-                            <button
-                                onClick={() =>
-                                    setShowingNavigationDropdown(
-                                        (previousState) => !previousState,
-                                    )
-                                }
-                                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
-                            >
-                                <svg
-                                    className="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        className={
-                                            !showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        className={
-                                            showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+        <div className="min-h-screen bg-[#EEF1F3] font-body text-[#14171F] flex">
+            {/* Sidebar */}
+            <aside className="hidden md:flex md:flex-col w-64 shrink-0 bg-[#14171F] text-white min-h-screen">
+                <div className="h-16 flex items-center px-5 border-b border-white/10">
+                    <Link href={route('home')} className="font-display font-bold text-xl">The Bulletin</Link>
                 </div>
 
-                <div
-                    className={
-                        (showingNavigationDropdown ? 'block' : 'hidden') +
-                        ' sm:hidden'
-                    }
-                >
-                    <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <div className="border-t border-gray-200 pb-1 pt-4">
-                        <div className="px-4">
-                            <div className="text-base font-medium text-gray-800">
-                                {user.name}
-                            </div>
-                            <div className="text-sm font-medium text-gray-500">
-                                {user.email}
-                            </div>
-                        </div>
-
-                        <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                method="post"
-                                href={route('logout')}
-                                as="button"
-                            >
-                                Log Out
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
+                <div className="px-5 py-4 border-b border-white/10">
+                    <p className="font-mono text-[10px] uppercase tracking-wider text-white/40">Signed in as</p>
+                    <p className="font-body text-sm mt-1">{user.name}</p>
+                    <span
+                        className="inline-block mt-2 font-mono text-[10px] uppercase tracking-wider px-2 py-0.5"
+                        style={{ backgroundColor: roleInfo.tone }}
+                    >
+                        {roleInfo.label}
+                    </span>
                 </div>
-            </nav>
 
-            {header && (
-                <header className="bg-white shadow">
-                    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                        {header}
-                    </div>
-                </header>
+                <nav className="flex-1 py-4">
+                    <p className="px-4 font-mono text-[10px] uppercase tracking-wider text-white/30 mb-2">Dashboard</p>
+                    {navItem(route('dashboard'), 'Overview', route().current('dashboard'))}
+                    {roleInfo.route !== 'dashboard' &&
+                        navItem(route(roleInfo.route), `${roleInfo.label} panel`, route().current(roleInfo.route))}
+
+                    {CAN_MANAGE_ARTICLES.includes(user.role) && (
+                        <>
+                            <p className="px-4 font-mono text-[10px] uppercase tracking-wider text-white/30 mt-6 mb-2">Content</p>
+                            {navItem(route('articles.create'), 'Write article', route().current('articles.create'))}
+                            {navItem(route('articles.index'), 'All articles', route().current('articles.index'))}
+                        </>
+                    )}
+
+                    <p className="px-4 font-mono text-[10px] uppercase tracking-wider text-white/30 mt-6 mb-2">Site</p>
+                    {navItem(route('home'), 'View site', false)}
+                    {navItem(route('search'), 'Search', route().current('search'))}
+                </nav>
+
+                <div className="p-4 border-t border-white/10">
+                    <Link
+                        href={route('logout')}
+                        method="post"
+                        as="button"
+                        className="w-full font-mono text-xs uppercase tracking-wider px-4 py-2.5 border border-white/20 text-white/70 hover:text-white hover:border-white/40 text-left"
+                    >
+                        Sign out
+                    </Link>
+                </div>
+            </aside>
+
+            {/* Mobile top bar */}
+            <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#14171F] text-white h-14 flex items-center justify-between px-4">
+                <Link href={route('home')} className="font-display font-bold text-lg">The Bulletin</Link>
+                <button onClick={() => setMobileOpen(!mobileOpen)} className="font-mono text-xs uppercase tracking-wider">
+                    {mobileOpen ? 'Close' : 'Menu'}
+                </button>
+            </div>
+            {mobileOpen && (
+                <div className="md:hidden fixed top-14 left-0 right-0 z-30 bg-[#14171F] text-white pb-4">
+                    {navItem(route('dashboard'), 'Overview', route().current('dashboard'))}
+                    {roleInfo.route !== 'dashboard' && navItem(route(roleInfo.route), `${roleInfo.label} panel`, route().current(roleInfo.route))}
+                    {CAN_MANAGE_ARTICLES.includes(user.role) && navItem(route('articles.create'), 'Write article', false)}
+                    {navItem(route('logout'), 'Sign out', false)}
+                </div>
             )}
 
-            <main>{children}</main>
+            {/* Main content */}
+            <div className="flex-1 min-w-0 md:pt-0 pt-14">
+                {header && (
+                    <div className="bg-white border-b border-[#D7DBDE] px-4 md:px-8 py-6">
+                        {header}
+                    </div>
+                )}
+                <div className="p-4 md:p-8">{children}</div>
+            </div>
         </div>
     );
 }

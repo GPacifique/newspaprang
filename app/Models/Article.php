@@ -62,4 +62,10 @@ class Article extends Model
     {
         return $this->hasMany(Comment::class)->latest();
     }
+
+    // Users who have saved (bookmarked) this article
+    public function bookmarks()
+    {
+        return $this->hasMany(Bookmark::class);
+    }
 }

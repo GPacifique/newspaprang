@@ -1,64 +1,37 @@
 <?php
+
 namespace App\Http\Controllers;
 
+use App\Models\Article;
 use App\Models\Bookmark;
 use Illuminate\Http\Request;
 
 class BookmarkController extends Controller
 {
     /**
-     * Get user bookmarks
+     * POST /articles/{article}/bookmark
+     * Save an article for the current user. Idempotent — re-saving does nothing.
      */
-    public function index()
+    public function store(Request $request, Article $article)
     {
-        return auth()->user()
-            ->bookmarks()
-            ->with('article')
-            ->latest()
-            ->get();
+        Bookmark::firstOrCreate([
+            'user_id' => $request->user()->id,
+            'article_id' => $article->id,
+        ]);
+
+        return back()->with('success', 'Saved for later.');
     }
 
     /**
-     * Toggle bookmark (add/remove)
+     * DELETE /articles/{article}/bookmark
+     * Remove a saved article for the current user.
      */
-    public function toggle($article_id)
+    public function destroy(Request $request, Article $article)
     {
-        $userId = auth()->id();
-
-        $bookmark = Bookmark::where('user_id', $userId)
-            ->where('article_id', $article_id)
-            ->first();
-
-        if ($bookmark) {
-            $bookmark->delete();
-
-            return response()->json([
-                'message' => 'Bookmark removed'
-            ]);
-        }
-
-        $bookmark = Bookmark::create([
-            'user_id' => $userId,
-            'article_id' => $article_id
-        ]);
-
-        return response()->json([
-            'message' => 'Bookmarked',
-            'bookmark' => $bookmark
-        ]);
-    }
-
-    /**
-     * Remove bookmark directly
-     */
-    public function destroy($article_id)
-    {
-        Bookmark::where('user_id', auth()->id())
-            ->where('article_id', $article_id)
+        Bookmark::where('user_id', $request->user()->id)
+            ->where('article_id', $article->id)
             ->delete();
 
-        return response()->json([
-            'message' => 'Bookmark removed'
-        ]);
+        return back()->with('success', 'Removed from saved.');
     }
 }

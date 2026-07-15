@@ -1,121 +1,50 @@
-import React from "react";
-import { Link, usePage } from "@inertiajs/react";
+import React from 'react';
+import { Head, Link } from '@inertiajs/react';
+import GuestLayout from '@/Layouts/GuestLayout';
+import ArticleCard from '@/Components/ArticleCard';
+import WireStrip from '@/Components/WireStrip';
 
-export default function Index() {
-    const { articles } = usePage().props;
+/**
+ * props: { articles: { data: Article[], links: [], meta: {} } }
+ */
+export default function Index({ articles }) {
+    const list = articles?.data ?? articles ?? [];
+    const links = articles?.links ?? [];
 
     return (
-        <div className="max-w-7xl mx-auto px-6 py-8">
+        <GuestLayout>
+            <Head title="Articles" />
 
-            {/* HEADER */}
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">
-                    Latest Articles
-                </h1>
+            <section className="max-w-7xl mx-auto px-4 md:px-6 pt-10 pb-6 border-b border-[#D7DBDE]">
+                <WireStrip code="ARC-00" timestamp="FULL WIRE" tone="press" className="mb-3" />
+                <h1 className="font-display font-bold text-4xl text-[#14171F]">All articles</h1>
+            </section>
 
-                <Link
-                    href="/manage/articles/create"
-                    className="bg-red-600 text-white px-4 py-2 rounded"
-                >
-                    + Create Article
-                </Link>
-            </div>
-
-            {/* GRID */}
-            <div className="grid md:grid-cols-3 gap-6">
-
-                {articles?.data?.length > 0 ? (
-                    articles.data.map((article) => (
-                        <div
-                            key={article.id}
-                            className="bg-white shadow rounded-xl overflow-hidden"
-                        >
-
-                            {/* IMAGE (FIXED PATH) */}
-                            {article.featured_image && (
-                                <img
-                                    src={`/articles/${article.featured_image}`}
-                                    alt={article.title}
-                                    className="w-full h-48 object-cover"
-                                />
-                            )}
-
-                            <div className="p-4">
-
-                                {/* CATEGORY */}
-                                <span className="text-xs bg-gray-200 px-2 py-1 rounded">
-                                    {article.category?.name}
-                                </span>
-
-                                {/* TITLE */}
-                                <h2 className="text-xl font-bold mt-2">
-                                    {article.title}
-                                </h2>
-
-                                {/* META */}
-                                <p className="text-sm text-gray-500 mt-1">
-                                    By {article.author?.name} • {article.views} views
-                                </p>
-
-                                {/* EXCERPT */}
-                                <p className="text-gray-600 text-sm mt-2">
-                                    {article.excerpt}
-                                </p>
-
-                                {/* ACTIONS */}
-                                <div className="flex justify-between mt-4">
-
-                                    <Link
-                                        href={`/articles/${article.slug}`}
-                                        className="text-green-600 font-medium"
-                                    >
-                                        Read
-                                    </Link>
-
-                                    <Link
-                                        href={`/manage/articles/${article.id}/edit`}
-                                        className="text-blue-600 font-medium"
-                                    >
-                                        Edit
-                                    </Link>
-
-                                </div>
-
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <p className="text-gray-500">
-                        No articles found.
+            <section className="max-w-7xl mx-auto px-4 md:px-6 py-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {list.map((article) => (
+                        <ArticleCard key={article.id} article={article} />
+                    ))}
+                </div>
+                {list.length === 0 && (
+                    <p className="font-mono text-xs uppercase tracking-wider text-[#3A4048]/50 py-10">
+                        No articles have been filed yet.
                     </p>
                 )}
 
-            </div>
-
-            {/* PAGINATION (SAFE VERSION) */}
-            <div className="mt-8 flex gap-2 flex-wrap">
-
-                {articles?.links?.map((link, i) =>
-                    link.url ? (
-                        <Link
-                            key={i}
-                            href={link.url}
-                            className={`px-3 py-1 border rounded ${
-                                link.active ? "bg-red-600 text-white" : ""
-                            }`}
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
-                    ) : (
-                        <span
-                            key={i}
-                            className="px-3 py-1 text-gray-400 border rounded"
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
-                    )
+                {links.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-10 font-mono text-xs">
+                        {links.map((link, i) => (
+                            <Link
+                                key={i}
+                                href={link.url || '#'}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                className={`px-3 py-1.5 border ${link.active ? 'bg-[#14171F] text-white border-[#14171F]' : 'border-[#D7DBDE] text-[#3A4048]'} ${!link.url ? 'opacity-30 pointer-events-none' : 'hover:border-[#25406B]'}`}
+                            />
+                        ))}
+                    </div>
                 )}
-
-            </div>
-
-        </div>
+            </section>
+        </GuestLayout>
     );
 }

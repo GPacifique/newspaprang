@@ -1,0 +1,40 @@
+/*
+  DESIGN SYSTEM — "Press Wire"
+  A newsroom-inspired editorial system for the publishing platform.
+
+  Palette (use as Tailwind arbitrary values, e.g. bg-[#14171F]):
+    --ink        #14171F   ink navy-black    (headers, dashboard chrome, dark surfaces)
+    --ink-soft   #3A4048   soft ink          (secondary text on paper)
+    --paper      #EEF1F3   cool paper grey   (page background)
+    --paper-2    #FFFFFF   card surface
+    --press      #25406B   press blue        (primary accent, links, active states)
+    --wire       #C1401F   wire red          (live/breaking, destructive, alerts)
+    --gold       #B8862E   gold              (premium tier, editor accent)
+    --line       #D7DBDE   hairline rule colour
+
+  Type:
+    Display  — 'Fraunces', serif       (headlines, hero type)
+    Body     — 'IBM Plex Sans', sans   (paragraphs, UI labels)
+    Mono     — 'IBM Plex Mono', mono   (datelines, wire codes, bylines, timestamps)
+
+  Signature element: the "wire strip" — a monospace dateline bar under every
+  headline/card carrying a category code + timestamp + read time, styled like
+  a press-agency ticker (e.g. "SEC-04 // 14:32 UTC // 4 MIN READ").
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --ink: #14171F;
+  --ink-soft: #3A4048;
+  --paper: #EEF1F3;
+  --paper-2: #FFFFFF;
+  --press: #25406B;
+  --wire: #C1401F;
+  --gold: #B8862E;
+  --line: #D7DBDE;
+}
+
+.font-display { font-family: 'Fraunces', serif; }
+.font-body { font-family: 'IBM Plex Sans', sans-serif; }
+.font-mono { font-family: 'IBM Plex Mono', monospace; }

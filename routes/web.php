@@ -7,13 +7,21 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\CommentController;
-
+use App\Http\Controllers\BookmarkController;
+use App\Http\Controllers\SubscriberDashboardController;
+use Inertia\Inertia;
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AuthorDashboardController;
+use App\Http\Controllers\EditorDashboardController;
+use App\Http\Controllers\ModeratorDashboardController;
+use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\SuperAdminDashboardController;
 Route::post('/articles/{article}/comments', [CommentController::class, 'store'])
     ->name('comments.store');
 
 Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])
     ->name('comments.destroy');
-    
+
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +51,29 @@ Route::get('/articles/{article:slug}', [ArticleController::class, 'show'])
 
 /*
 |--------------------------------------------------------------------------
+| Dashboards
+|--------------------------------------------------------------------------
+*/
+// routes/web.php
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', DashboardRedirectController::class)->name('dashboard');
+
+    Route::get('/super-admin/dashboard', [SuperAdminDashboardController::class, 'index'])->name('super-admin.dashboard');
+    Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/editor/dashboard', [EditorDashboardController::class, 'index'])->name('editor.dashboard');
+    Route::get('/author/dashboard', [AuthorDashboardController::class, 'index'])->name('author.dashboard');
+    Route::get('/moderator/dashboard', [ModeratorDashboardController::class, 'index'])->name('moderator.dashboard');
+    Route::get('/subscriber/dashboard', [SubscriberDashboardController::class, 'index'])->name('subscriber.dashboard');
+    Route::get('/premium/dashboard', [PremiumDashboardController::class, 'index'])->name('premium.dashboard');
+
+
+    // Save / unsave an article
+    Route::post('/articles/{article}/bookmark', [BookmarkController::class, 'store'])->name('bookmarks.store');
+    Route::delete('/articles/{article}/bookmark', [BookmarkController::class, 'destroy'])->name('bookmarks.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
 | SEARCH
 |--------------------------------------------------------------------------
 */
@@ -62,10 +93,6 @@ require __DIR__ . '/auth.php';
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
-
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
 
     /*
     |--------------------------------------------------------------------------
