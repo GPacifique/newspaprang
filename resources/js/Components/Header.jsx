@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, usePage } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
+import ApplicationLogo from "./ApplicationLogo";
 import {
     Menu,
     X,
@@ -109,21 +110,13 @@ export default function Header() {
                 <div className="flex items-center justify-between h-16">
 
                     {/* Logo */}
-                    <Link
-                        href={route("home")}
-                        className="flex items-center gap-2"
-                    >
-                        
+                
+            
+                        <Link href={route('home')}>
+    <ApplicationLogo className="h-9 w-auto text-[#14171F]" />
+</Link>
 
-                        <div className="hidden lg:block">
-                            <h2 className="font-bold text-xl">
-                                STL
-                            </h2>
-                            <p className="text-xs text-gray-500">
-                                Learn Modern Software Development
-                            </p>
-                        </div>
-                    </Link>
+                        
 
                     {/* Desktop Navigation */}
 

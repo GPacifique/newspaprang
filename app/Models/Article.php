@@ -27,6 +27,7 @@ class Article extends Model
         'category_id',
         'user_id',
         'published_at',
+        'read_time'
     ];
 
     /**

@@ -4,7 +4,6 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import ArticleCard from '@/Components/ArticleCard';
 import CategoryPill from '@/Components/CategoryPill';
 import WireStrip from '@/Components/WireStrip';
-
 /**
  * props: { featured: Article, latest: Article[], categories: Category[] }
  */

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 
 // Maps a role to its dedicated dashboard route + a tone for the sidebar accent stripe.
 const ROLE_DASHBOARDS = {
@@ -38,7 +39,9 @@ export default function AuthenticatedLayout({ header, children }) {
             {/* Sidebar */}
             <aside className="hidden md:flex md:flex-col w-64 shrink-0 bg-[#14171F] text-white min-h-screen">
                 <div className="h-16 flex items-center px-5 border-b border-white/10">
-                    <Link href={route('home')} className="font-display font-bold text-xl">The Bulletin</Link>
+                    <Link href={route('home')} className="font-display font-bold text-xl">
+    <ApplicationLogo/>
+</Link>
                 </div>
 
                 <div className="px-5 py-4 border-b border-white/10">

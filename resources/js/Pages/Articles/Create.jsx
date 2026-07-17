@@ -2,6 +2,7 @@ import React from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import WireStrip from '@/Components/WireStrip';
+import ArticleEditor from '@/Components/ArticleEditor';
 
 /**
  * props: { categories: Category[] }
@@ -76,12 +77,9 @@ export default function Create({ categories = [] }) {
                 </Field>
 
                 <Field label="Content" error={errors.content}>
-                    <textarea
-                        value={data.content}
-                        onChange={(e) => setData('content', e.target.value)}
-                        rows={14}
-                        placeholder="Write the full story…"
-                        className="w-full border border-[#D7DBDE] font-body text-sm p-3 focus:outline-none focus:border-[#25406B]"
+                    <ArticleEditor
+                        content={data.content}
+                        onChange={(html) => setData('content', html)}
                     />
                 </Field>
 
